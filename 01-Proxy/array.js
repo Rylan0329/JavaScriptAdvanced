@@ -31,23 +31,22 @@ console.log(target);
 // Custom a proxy from Array to figure out it.
 
 const IndexProxy = new Proxy(Array, {
-  // construct function
-  construct: (target, originalArr) => {
+  construct(target, argArray) {
     const index = {};
-    originalArr.forEach((x) => (index[x.id] = x));
-    const newArray = new target(...originalArr);
-    return new Proxy(newArray, {
-      get: (target, property) => {
-        // refactor push function
-        if (property === "push")
+    argArray.forEach((x) => (index[x.id] = x));
+    const _argArray = new target(...argArray);
+    return new Proxy(_argArray, {
+      get: (target, prop) => {
+        if (prop === "push") {
           return (item) => {
             index[item.id] = item;
-            return target[property].call(target, item);
+            return target[prop].call(target, item);
           };
-        else if (property === "findBookById") {
-          return (id) => (id in index ? index[id] : "Do not have this book");
+        } else if (prop === "findBookById") {
+          return (id) =>
+            id in index ? index[id] : `Do not have this book: id: ${id}`;
         }
-        return target[property];
+        return target[prop];
       },
     });
   },
@@ -71,13 +70,7 @@ const indexBooks = new IndexProxy(
   }
 );
 console.log(indexBooks);
-indexBooks.push({
-  id: 8,
-  name: "Testing",
-  author: "Testing",
-});
-console.log(indexBooks);
-
-console.log(indexBooks.findBookById(8));
 console.log(indexBooks.findBookById(2));
-console.log(indexBooks.findBookById(5));
+console.log(indexBooks.findBookById(8));
+indexBooks.push({ id: 8, name: "Testing Book", author: "TestUser1" });
+console.log(indexBooks.findBookById(8));
